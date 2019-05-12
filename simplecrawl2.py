@@ -46,7 +46,7 @@ for category in categories.select('.top-level-genre'): # Loop through all genres
         letterpageurl = category['href'] + "&letter=" + letter
         letterpage = requests.get(letterpageurl, timeout=5)
         pagedletterpage = BeautifulSoup(letterpage.content, 'html.parser')
-        print (letter)
+        print (letter, end = '')
 
         for page in pagedletterpage.select('.paginate a'): # sub-subpages from 1-x
             podcastpage = requests.get(page['href'], timeout=5)
@@ -65,6 +65,7 @@ for category in categories.select('.top-level-genre'): # Loop through all genres
                         }
                         podcastlinks.append(link)
 
+# Save links...
 with open(savedir + '\\' + 'allpodcastlinks.json', 'w', newline="") as outfile:
     json.dump(podcastlinks, outfile)
  
@@ -110,9 +111,9 @@ for link in podcastlinks:
             description = ""
 
         try:
-            link = xf.channel.link.get_text()
+            wlink = xf.channel.link.get_text()
         except:
-            link = ""
+            wlink = ""
 
         try: 
             author = xf.find("itunes:author").get_text()
@@ -128,7 +129,7 @@ for link in podcastlinks:
             "itunesGenre": primaryGenreName,
             "itunesID": theID,
             "episodecount": episodecount,
-            "link": link,
+            "link": wlink,
             "author": author,
             "language": language,
             "feeddomain": ".".join(nl.split('.')[-2:]),
