@@ -33,7 +33,9 @@ categories = BeautifulSoup(allcatpage.content, "html.parser")
 
 # Verzeichnis für die Ergebnisdaten anlegen
 savedir = "crawl_" + str(datetime.date.today())
-os.mkdir(savedir)
+
+if not os.path.exists(savedir):
+    os.mkdir(savedir)
 
 # Arbeitsschritt 1 - wie sammeln erst mal alle podcast links auf der itunes Seite ein
 for category in categories.select('.top-level-genre'): # Loop through all genres
