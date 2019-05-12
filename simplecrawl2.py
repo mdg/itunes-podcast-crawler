@@ -40,7 +40,7 @@ for category in categories.select('.top-level-genre'): # Loop through all genres
     categorypage = requests.get(category['href'], timeout=5)
     alphabetpages = BeautifulSoup(categorypage.content, "html.parser")
     itunesGenre = category.get_text()
-    print (itunesGenre)
+    print (itunesGenre + " => ", end='')
 
     for letter in ascii_uppercase + "ÄÖÜ*": # Subpages from A-Z + ÄÖÜ + *
         letterpageurl = category['href'] + "&letter=" + letter
@@ -64,6 +64,7 @@ for category in categories.select('.top-level-genre'): # Loop through all genres
                             "itunesID": theID
                         }
                         podcastlinks.append(link)
+    print ("") # Zeilenumbruch :-) 
 
 # Save links...
 with open(savedir + '\\' + 'allpodcastlinks.json', 'w', newline="") as outfile:
