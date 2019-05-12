@@ -6,6 +6,8 @@ import urllib.parse as urlparse
 import json
 import csv 
 import sys
+import os
+import datetime
 
 def get_id(url):
     parts = urlparse.urlsplit(url) 
@@ -28,6 +30,10 @@ startlink = 'https://podcasts.apple.com/de/genre/podcasts/id26'
 allcatpage = requests.get(startlink, timeout=5)
 
 categories = BeautifulSoup(allcatpage.content, "html.parser")
+
+# Verzeichnis für die Ergebnisdaten anlegen
+savedir = "crawl_" + str(datetime.date.today())
+os.mkdir(savedir)
 
 # Arbeitsschritt 1 - wie sammeln erst mal alle podcast links auf der itunes Seite ein
 for category in categories.select('.top-level-genre'): # Loop through all genres
@@ -58,8 +64,8 @@ for category in categories.select('.top-level-genre'): # Loop through all genres
                             "itunesID": theID
                         }
                         podcastlinks.append(link)
- 
-with open('allpodcastlinks.json', 'w', newline="") as outfile:
+
+with open(savedir + '\\' + 'allpodcastlinks.json', 'w', newline="") as outfile:
     json.dump(podcastlinks, outfile)
  
  
@@ -153,14 +159,14 @@ for link in podcastlinks:
         continue
 
 # jetzt speichern wir mal unsere Ergebnisse ab
-with open('data_all.json', 'w', newline="") as outfile:
+with open(savedir + '\\' + 'data_all.json', 'w', newline="") as outfile:
     json.dump(data_all, outfile)
 
-with open('data_en.json', 'w', newline="") as outfile:
+with open(savedir + '\\' + 'data_en.json', 'w', newline="") as outfile:
     json.dump(data_en, outfile)
 
-with open('data_de.json', 'w', newline="") as outfile:
+with open(savedir + '\\' + 'data_de.json', 'w', newline="") as outfile:
     json.dump(data_de, outfile)
 
-with open('data_all_2019.json', 'w', newline="") as outfile:
+with open(savedir + '\\' + 'data_all_2019.json', 'w', newline="") as outfile:
     json.dump(data_all_2019, outfile)
