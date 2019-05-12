@@ -60,7 +60,7 @@ for category in categories.select('.top-level-genre'): # Loop through all genres
                     if not theID in ids:
                         ids.append(theID)
                         linkinfo = {
-                            "link": link,
+                            "link": link['href'],
                             "itunesID": theID
                         }
                         podcastlinks.append(link)
