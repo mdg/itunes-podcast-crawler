@@ -5,6 +5,7 @@ import re
 import urllib.parse as urlparse
 import json
 import csv 
+import sys
 
 def get_id(url):
     parts = urlparse.urlsplit(url) 
