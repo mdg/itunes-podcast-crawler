@@ -42,13 +42,13 @@ for category in categories.select('.top-level-genre'): # Loop through all genres
     categorypage = requests.get(category['href'], timeout=5)
     alphabetpages = BeautifulSoup(categorypage.content, "html.parser")
     itunesGenre = category.get_text()
-    print (itunesGenre + " => ", end='')
+    print (itunesGenre)
 
     for letter in ascii_uppercase + "ÄÖÜ*": # Subpages from A-Z + ÄÖÜ + *
         letterpageurl = category['href'] + "&letter=" + letter
         letterpage = requests.get(letterpageurl, timeout=5)
         pagedletterpage = BeautifulSoup(letterpage.content, 'html.parser')
-        print (letter, end = '')
+        print (letter)
 
         for page in pagedletterpage.select('.paginate a'): # sub-subpages from 1-x
             podcastpage = requests.get(page['href'], timeout=5)
@@ -65,7 +65,7 @@ for category in categories.select('.top-level-genre'): # Loop through all genres
                             "link": link['href'],
                             "itunesID": theID
                         }
-                        podcastlinks.append(link)
+                        podcastlinks.append(linkinfo)
     print ("") # Zeilenumbruch :-) 
 
 # Save links...
