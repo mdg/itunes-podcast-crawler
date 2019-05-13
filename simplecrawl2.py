@@ -37,54 +37,58 @@ savedir = "crawl_" + str(datetime.date.today())
 if not os.path.exists(savedir):
     os.mkdir(savedir)
 
-# Arbeitsschritt 1 - wie sammeln erst mal alle podcast links auf der itunes Seite ein
-for category in categories.select('.top-level-genre'): # Loop through all genres
-    categorypage = requests.get(category['href'], timeout=5)
-    alphabetpages = BeautifulSoup(categorypage.content, "html.parser")
-    itunesGenre = category.get_text()
-    print (itunesGenre)
+    # Arbeitsschritt 1 - wie sammeln erst mal alle podcast links auf der itunes Seite ein
+    for category in categories.select('.top-level-genre'): # Loop through all genres
+        categorypage = requests.get(category['href'], timeout=5)
+        alphabetpages = BeautifulSoup(categorypage.content, "html.parser")
+        itunesGenre = category.get_text()
+        print (itunesGenre)
 
-    for letter in ascii_uppercase + "ÄÖÜ*": # Subpages from A-Z + ÄÖÜ + *
-        letterpageurl = category['href'] + "&letter=" + letter
-        letterpage = requests.get(letterpageurl, timeout=5)
-        pagedletterpage = BeautifulSoup(letterpage.content, 'html.parser')
-        print (letter)
+        for letter in ascii_uppercase + "ÄÖÜ*": # Subpages from A-Z + ÄÖÜ + *
+            letterpageurl = category['href'] + "&letter=" + letter
+            letterpage = requests.get(letterpageurl, timeout=5)
+            pagedletterpage = BeautifulSoup(letterpage.content, 'html.parser')
+            print (letter)
 
-        for page in pagedletterpage.select('.paginate a'): # sub-subpages from 1-x
-            podcastpage = requests.get(page['href'], timeout=5)
-            allpodcasts = BeautifulSoup(podcastpage.content, 'html.parser')
+            for page in pagedletterpage.select('.paginate a'): # sub-subpages from 1-x
+                podcastpage = requests.get(page['href'], timeout=5)
+                allpodcasts = BeautifulSoup(podcastpage.content, 'html.parser')
 
-            for link in allpodcasts.select('#selectedcontent ul>li a'): # Finally! We loop through all podcast links! Yey!
-                if "/id" in link['href']:
-                    theID = get_id(link['href'])
+                for link in allpodcasts.select('#selectedcontent ul>li a'): # Finally! We loop through all podcast links! Yey!
+                    if "/id" in link['href']:
+                        theID = get_id(link['href'])
 
-                    # Duplikate ausschließen
-                    if not theID in ids:
-                        ids.append(theID)
-                        linkinfo = {
-                            "link": link['href'],
-                            "itunesID": theID
-                        }
-                        podcastlinks.append(linkinfo)
-    print ("") # Zeilenumbruch :-) 
+                        # Duplikate ausschließen
+                        if not theID in ids:
+                            ids.append(theID)
+                            linkinfo = {
+                                "link": link['href'],
+                                "itunesID": theID
+                            }
+                            podcastlinks.append(linkinfo)
+        print ("") # Zeilenumbruch :-) 
 
-# Save links...
-with open(savedir + '\\' + 'allpodcastlinks.json', 'w', newline="") as outfile:
-    json.dump(podcastlinks, outfile)
- 
- 
-# Arbeitsschritt 2 - via itunes Lookup API Podcast Details abrufen
- 
+    # Save links...
+    with open(savedir + '\\' + 'allpodcastlinks.json', 'w', newline="") as outfile:
+        json.dump(podcastlinks, outfile)
+else: # oh, the folder exists from an earlier crawl? Let's use it!
+    with open(savedir + '\\' + 'allpodcastlinks.json', "r") as read_file:
+        podcastlinks = json.load(read_file)
+     
+# Arbeitsschritt 2 - via itunes Lookup API Podcast Details abrufen 
 for link in podcastlinks:
     try:
-        theID = link["itunesID"]
+        theID = str(link["itunesID"])
 
-        lookupurl = 'https://itunes.apple.com/de/lookup?id=' + str(theID)
+        lookupurl = 'https://itunes.apple.com/de/lookup?id=' + theID
 
         try: 
-            if 'feedUrl' not in requests.get(lookupurl, timeout=5).json()['results'][0]:
+            luresults = requests.get(lookupurl, timeout=5).json()
+            if 'feedUrl' not in luresults['results'][0]:
                 # es gibt keine gültige feedURL, wir gehen also zum nächsten Eintrag
                 print ("+++++++++ keine gültige Feedurl für ID" + theID + " +++++++++")
+                if 'errorMessage' in luresults:
+                    print ("+++++++++ " + luresults['errorMessage'] + " +++++++++")
                 continue
 
             # wir haben also eine FeedURL, versuchen wir doch mal drauf zuzugreifen...
@@ -93,7 +97,11 @@ for link in podcastlinks:
         except:
             # Autsch, Fehler. Könnte man jetzt trotzdem ablegen, werden wir aber nicht...
             print ("+++++++++ Fehler beim Zugriff auf " + lookupurl + " +++++++++")
+            ei = sys.exc_info()
+            print ("+++++++++ ",ei[0]," occured. +++++++++")
             continue
+
+        
 
         # jetzt wissen wir den Podcastfeed und den laden wir jetzt.
         try: 
@@ -102,10 +110,17 @@ for link in podcastlinks:
             primaryGenreName = itunesData["primaryGenreName"]
             releaseDate = itunesData["releaseDate"]
             title = xf.channel.title.get_text()
-            language = xf.channel.language.get_text()
+
+            try:
+                language = xf.channel.language.get_text()
+            except:
+                language = "UNKNOWN"
+
             episodecount = str(len(xf.find_all("item")))
         except:
             print ("+++++++++ Fehler beim Zugriff auf oder der Auswertung von " + feedurl + " +++++++++")
+            ei = sys.exc_info()
+            print ("+++++++++ ",ei[0]," occured. +++++++++")
             continue
         
         try:
