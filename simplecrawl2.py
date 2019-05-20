@@ -9,6 +9,20 @@ import sys
 import os
 import datetime
 
+# Variablen und Konstanten
+data_all = []
+data_en = []
+data_de = []
+data_all_2019 = []
+ids = []
+podcastlinks = []
+startlink = 'https://podcasts.apple.com/de/genre/podcasts/id26'
+
+c = 0 # durchlaufender Zähler
+sp = 0 # startpunkt ab dem wir Aufrufe machen
+oc = 10000 # alle oc Abrufe wollen wir einen Zwischenstand speichern
+stepper = 10000
+
 def get_id(url):
     parts = urlparse.urlsplit(url) 
     if parts.hostname == 'podcasts.apple.com':
@@ -18,17 +32,37 @@ def get_id(url):
             except ValueError: pass
         raise ValueError("Invalid url: %r" % (url,))
 
-data_all = []
-data_en = []
-data_de = []
-data_all_2019 = []
-ids = []
 
-podcastlinks = []
+def savedata(the_data, filename):
+    if len(the_data)>0:
+        buffer = []
+        try:
+            with open(filename, "r") as read_file:
+                buffer = json.load(read_file)
+        except:
+            pass
+        buffer.append(the_data)
+        with open(filename, 'w', newline="") as outfile:
+            json.dump(buffer, outfile)
+        buffer=[]
 
-startlink = 'https://podcasts.apple.com/de/genre/podcasts/id26'
+
+def saveall():
+    savedata(data_all, savedir + '\\' + 'data_all.json')
+    savedata(data_en, savedir + '\\' + 'data_en.json')
+    savedata(data_de, savedir + '\\' + 'data_de.json')
+    savedata(data_all_2019, savedir + '\\' + 'data_all_2019.json')
+    
+    # flush memory
+    data_all.clear()
+    data_en.clear()
+    data_de.clear()
+    data_all_2019.clear()
+
+
+
+
 allcatpage = requests.get(startlink, timeout=5)
-
 categories = BeautifulSoup(allcatpage.content, "html.parser")
 
 # Verzeichnis für die Ergebnisdaten anlegen
@@ -77,6 +111,10 @@ else: # oh, the folder exists from an earlier crawl? Let's use it!
      
 # Arbeitsschritt 2 - via itunes Lookup API Podcast Details abrufen 
 for link in podcastlinks:
+    c = c + 1
+    if c<sp: 
+        continue # solange ohne Aktion durch die Schleife laufen bis wir an der richtigen Stelle sind
+
     try:
         theID = str(link["itunesID"])
 
@@ -87,8 +125,6 @@ for link in podcastlinks:
             if 'feedUrl' not in luresults['results'][0]:
                 # es gibt keine gültige feedURL, wir gehen also zum nächsten Eintrag
                 print ("+++++++++ keine gültige Feedurl für ID" + theID + " +++++++++")
-                if 'errorMessage' in luresults:
-                    print ("+++++++++ " + luresults['errorMessage'] + " +++++++++")
                 continue
 
             # wir haben also eine FeedURL, versuchen wir doch mal drauf zuzugreifen...
@@ -97,8 +133,6 @@ for link in podcastlinks:
         except:
             # Autsch, Fehler. Könnte man jetzt trotzdem ablegen, werden wir aber nicht...
             print ("+++++++++ Fehler beim Zugriff auf " + lookupurl + " +++++++++")
-            ei = sys.exc_info()
-            print ("+++++++++ ",ei[0]," occured. +++++++++")
             continue
 
         
@@ -119,8 +153,6 @@ for link in podcastlinks:
             episodecount = str(len(xf.find_all("item")))
         except:
             print ("+++++++++ Fehler beim Zugriff auf oder der Auswertung von " + feedurl + " +++++++++")
-            ei = sys.exc_info()
-            print ("+++++++++ ",ei[0]," occured. +++++++++")
             continue
         
         try:
@@ -173,19 +205,17 @@ for link in podcastlinks:
 
         data_all.append(metadata)
         print (title)
+
+        #Zwischenspeichern
+        if (c>=oc):
+            oc = oc + stepper
+            print ("Save #" + str(c))
+            saveall()
+
     except:
         print("+++++++++ Oops! ",sys.exc_info()[0]," occured. +++++++++")
         continue
 
-# jetzt speichern wir mal unsere Ergebnisse ab
-with open(savedir + '\\' + 'data_all.json', 'w', newline="") as outfile:
-    json.dump(data_all, outfile)
+# jetzt speichern wir unsere finalen Ergebnisse ab
+saveall()
 
-with open(savedir + '\\' + 'data_en.json', 'w', newline="") as outfile:
-    json.dump(data_en, outfile)
-
-with open(savedir + '\\' + 'data_de.json', 'w', newline="") as outfile:
-    json.dump(data_de, outfile)
-
-with open(savedir + '\\' + 'data_all_2019.json', 'w', newline="") as outfile:
-    json.dump(data_all_2019, outfile)
