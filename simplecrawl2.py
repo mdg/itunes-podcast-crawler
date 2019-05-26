@@ -19,8 +19,8 @@ podcastlinks = []
 startlink = 'https://podcasts.apple.com/de/genre/podcasts/id26'
 
 c = 0 # durchlaufender Zähler
-sp = 0 # startpunkt ab dem wir Aufrufe machen
-oc = 10000 # alle oc Abrufe wollen wir einen Zwischenstand speichern
+sp = 330000 # startpunkt ab dem wir Aufrufe machen, default: 0
+oc = 330100 # alle oc Abrufe wollen wir einen Zwischenstand speichern, default: 10000
 stepper = 10000
 
 def get_id(url):
@@ -48,10 +48,21 @@ def savedata(the_data, filename):
 
 
 def saveall():
+    print ("saving data_all...")
     savedata(data_all, savedir + '\\' + 'data_all.json')
+    print ("done.")
+
+    print ("saving data_en...")
     savedata(data_en, savedir + '\\' + 'data_en.json')
+    print ("done.")
+    
+    print ("saving data_de...")
     savedata(data_de, savedir + '\\' + 'data_de.json')
+    print ("done.")
+    
+    print ("saving data_all_2019...")
     savedata(data_all_2019, savedir + '\\' + 'data_all_2019.json')
+    print ("done.")
     
     # flush memory
     data_all.clear()
