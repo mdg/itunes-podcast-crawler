@@ -18,11 +18,6 @@ ids = []
 podcastlinks = []
 startlink = 'https://podcasts.apple.com/de/genre/podcasts/id26'
 
-c = 0 # durchlaufender Zähler
-sp = 0 # startpunkt ab dem wir Aufrufe machen, default: 0
-oc = 10000 # alle oc Abrufe wollen wir einen Zwischenstand speichern, default: 10000
-stepper = 10000
-
 def get_id(url):
     parts = urlparse.urlsplit(url) 
     if parts.hostname == 'podcasts.apple.com':
@@ -122,9 +117,6 @@ else: # oh, the folder exists from an earlier crawl? Let's use it!
      
 # Arbeitsschritt 2 - via itunes Lookup API Podcast Details abrufen 
 for link in podcastlinks:
-    c = c + 1
-    if c<sp: 
-        continue # solange ohne Aktion durch die Schleife laufen bis wir an der richtigen Stelle sind
 
     try:
         theID = str(link["itunesID"])
@@ -217,11 +209,6 @@ for link in podcastlinks:
         data_all.append(metadata)
         print (title)
 
-        #Zwischenspeichern
-        if (c>=oc):
-            oc = oc + stepper
-            print ("Save #" + str(c))
-            saveall()
 
     except:
         print("+++++++++ Oops! ",sys.exc_info()[0]," occured. +++++++++")
