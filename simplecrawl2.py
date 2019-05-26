@@ -19,8 +19,8 @@ podcastlinks = []
 startlink = 'https://podcasts.apple.com/de/genre/podcasts/id26'
 
 c = 0 # durchlaufender Zähler
-sp = 330000 # startpunkt ab dem wir Aufrufe machen, default: 0
-oc = 330100 # alle oc Abrufe wollen wir einen Zwischenstand speichern, default: 10000
+sp = 0 # startpunkt ab dem wir Aufrufe machen, default: 0
+oc = 10000 # alle oc Abrufe wollen wir einen Zwischenstand speichern, default: 10000
 stepper = 10000
 
 def get_id(url):
