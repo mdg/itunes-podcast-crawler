@@ -30,16 +30,8 @@ def get_id(url):
 
 def savedata(the_data, filename):
     if len(the_data)>0:
-        buffer = []
-        try:
-            with open(filename, "r") as read_file:
-                buffer = json.load(read_file)
-        except:
-            pass
-        buffer.append(the_data)
         with open(filename, 'w', newline="") as outfile:
-            json.dump(buffer, outfile)
-        buffer=[]
+            json.dump(the_data, outfile)
 
 
 def saveall():
