@@ -82,11 +82,20 @@ if not os.path.exists(savedir):
             pagedletterpage = BeautifulSoup(letterpage.content, 'html.parser')
             print (letter)
 
-            for page in pagedletterpage.select('.paginate a'): # sub-subpages from 1-x
-                podcastpage = requests.get(page['href'], timeout=5)
-                allpodcasts = BeautifulSoup(podcastpage.content, 'html.parser')
+            pgcount = 1
+            linkcount = 1
 
-                for link in allpodcasts.select('#selectedcontent ul>li a'): # Finally! We loop through all podcast links! Yey!
+            while linkcount>0:
+                print (pgcount)
+                pgurl = letterpageurl + "&page=" + str(pgcount)
+                pgcount += 1
+
+                podcastpage = requests.get(pgurl, timeout=5)
+                allpodcasts = BeautifulSoup(podcastpage.content, 'html.parser')
+                allpodcastlinks = allpodcasts.select('#selectedcontent ul>li a')
+                linkcount = len(allpodcastlinks)
+
+                for link in allpodcastlinks: # Finally! We loop through all podcast links! Yey!
                     if "/id" in link['href']:
                         theID = get_id(link['href'])
 
@@ -98,7 +107,27 @@ if not os.path.exists(savedir):
                                 "itunesID": theID
                             }
                             podcastlinks.append(linkinfo)
-        print ("") # Zeilenumbruch :-) 
+
+                if linkcount == 1: # Bug in itunes: Jede page hat mindestens einen podcast, egal wie hoch die Paginierungszahl. Eine Seite mit nur einem Podcast ist also garantiert die letzte.
+                    linkcount = 0
+
+            # for page in pagedletterpage.select('.paginate a'): # sub-subpages from 1-x
+            #     podcastpage = requests.get(page['href'], timeout=5)
+            #     allpodcasts = BeautifulSoup(podcastpage.content, 'html.parser')
+
+            #     for link in allpodcasts.select('#selectedcontent ul>li a'): # Finally! We loop through all podcast links! Yey!
+            #         if "/id" in link['href']:
+            #             theID = get_id(link['href'])
+
+            #             # Duplikate ausschließen
+            #             if not theID in ids:
+            #                 ids.append(theID)
+            #                 linkinfo = {
+            #                     "link": link['href'],
+            #                     "itunesID": theID
+            #                 }
+            #                 podcastlinks.append(linkinfo)
+
 
     # Save links...
     with open(savedir + '\\' + 'allpodcastlinks.json', 'w', newline="") as outfile:
