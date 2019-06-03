@@ -80,7 +80,7 @@ if not os.path.exists(savedir):
             letterpageurl = category['href'] + "&letter=" + letter
             letterpage = requests.get(letterpageurl, timeout=5)
             pagedletterpage = BeautifulSoup(letterpage.content, 'html.parser')
-            print (letter)
+            print (itunesGenre + " - " + letter)
 
             pgcount = 1
             linkcount = 1
