@@ -55,10 +55,10 @@ if not os.path.exists(savedir):
 with open(savedir + '/' + 'allpodcastlinks.json', 'w', newline="") as outfile:
     # Arbeitsschritt 1 - wie sammeln erst mal alle podcast links auf der itunes Seite ein
 
-    top_level_genres = categories.select('.top-level-genre')[0:2]
+    top_level_genres = categories.select('.top-level-genre')
     print(repr(top_level_genres))
 
-    sub_genres = categories.select('.top-level-subgenres li a')[0:4]
+    sub_genres = categories.select('.top-level-subgenres li a')
     print(str(sub_genres))
 
     all_genres = top_level_genres + sub_genres
