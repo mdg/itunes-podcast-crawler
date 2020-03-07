@@ -10,10 +10,7 @@ import os
 import datetime
 
 # Variablen und Konstanten
-data_all = []
 data_en = []
-data_de = []
-data_all_2019 = []
 ids = []
 podcastlinks = []
 startlink = 'https://podcasts.apple.com/us/genre/podcasts/id26'
@@ -35,27 +32,12 @@ def savedata(the_data, filename):
 
 
 def saveall():
-    # print ("saving data_all...")
-    # savedata(data_all, savedir + '/' + 'data_all.json')
-    # print ("done.")
-
     print ("saving data_en...")
     savedata(data_en, savedir + '/' + 'data_en.json')
     print ("done.")
     
-    # print ("saving data_de...")
-    # savedata(data_de, savedir + '/' + 'data_de.json')
-    # print ("done.")
-    
-    # print ("saving data_all_2019...")
-    # savedata(data_all_2019, savedir + '/' + 'data_all_2019.json')
-    # print ("done.")
-    
     # flush memory
-    data_all.clear()
     data_en.clear()
-    data_de.clear()
-    data_all_2019.clear()
 
 
 
@@ -65,13 +47,16 @@ categories = BeautifulSoup(allcatpage.content, "html.parser")
 
 # Verzeichnis für die Ergebnisdaten anlegen
 savedir = "crawl_" + str(datetime.date.today())
+if not os.path.exists(savedir):
+    os.mkdir(savedir)
 
-if True or not os.path.exists(savedir):
-    if not os.path.exists(savedir):
-        os.mkdir(savedir)
-
+# Save links...
+with open(savedir + '/' + 'allpodcastlinks.json', 'w', newline="") as outfile:
     # Arbeitsschritt 1 - wie sammeln erst mal alle podcast links auf der itunes Seite ein
-    for category in categories.select('.top-level-genre'): # Loop through all genres
+
+    top_level_genres = categories.select('.top-level-genre')[0:2]
+    print(str(top_level_genres))
+    for category in top_level_genres: # Loop through all genres
         print("get category "+ category['href'])
         categorypage = requests.get(category['href'], timeout=5)
         alphabetpages = BeautifulSoup(categorypage.content, "html.parser")
@@ -115,7 +100,7 @@ if True or not os.path.exists(savedir):
                 if linkcount == 1: # Bug in itunes: Jede page hat mindestens einen podcast, egal wie hoch die Paginierungszahl. Eine Seite mit nur einem Podcast ist also garantiert die letzte.
                     linkcount = 0
 
-                if pgcount > 5:
+                if pgcount > 2:
                     break
 
             # for page in pagedletterpage.select('.paginate a'): # sub-subpages from 1-x
@@ -135,18 +120,13 @@ if True or not os.path.exists(savedir):
             #                 }
             #                 podcastlinks.append(linkinfo)
 
+    print('json dump to outfile\n')
 
-    # Save links...
-    with open(savedir + '/' + 'allpodcastlinks.json', 'w', newline="") as outfile:
-        print('json dump to outfile\n')
-        json.dump(podcastlinks, outfile)
-else: # oh, the folder exists from an earlier crawl? Let's use it!
-    with open(savedir + '/' + 'allpodcastlinks.json', "r") as read_file:
-        podcastlinks = json.load(read_file)
-     
+
+
 # Arbeitsschritt 2 - via itunes Lookup API Podcast Details abrufen 
 for link in podcastlinks:
-    print("lookup link: "+ link)
+    print("lookup link: "+ json.dumps(link))
 
     try:
         theID = str(link["itunesID"])
@@ -166,7 +146,7 @@ for link in podcastlinks:
         except:
             # Autsch, Fehler. Könnte man jetzt trotzdem ablegen, werden wir aber nicht...
             print ("+++++++++ Fehler beim Zugriff auf " + lookupurl + " +++++++++")
-            continue
+            # continue
 
         
 
@@ -186,7 +166,7 @@ for link in podcastlinks:
             episodecount = str(len(xf.find_all("item")))
         except:
             print ("+++++++++ Fehler beim Zugriff auf oder der Auswertung von " + feedurl + " +++++++++")
-            continue
+            # continue
         
         try:
             description = xf.channel.description.get_text()
@@ -227,22 +207,12 @@ for link in podcastlinks:
         if language.lower() == 'en':
             data_en.append(metadata)
 
-        # if 'de-' in language.lower():
-        #     data_de.append(metadata)
-
-        # if language.lower() == 'de':
-        #     data_de.append(metadata)
-
-        # if '2019' in releaseDate:
-        #     data_all_2019.append(metadata)
-
-        # data_all.append(metadata)
         print (title)
 
 
     except:
         print("+++++++++ Oops! ",sys.exc_info()[0]," occured. +++++++++")
-        continue
+        # continue
 
 # jetzt speichern wir unsere finalen Ergebnisse ab
 saveall()
