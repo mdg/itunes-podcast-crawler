@@ -13,6 +13,7 @@ import datetime
 data_en = []
 ids = []
 podcastlinks = []
+all_podcasts = {}
 startlink = 'https://podcasts.apple.com/us/genre/podcasts/id26'
 
 def get_id(url):
@@ -55,53 +56,43 @@ with open(savedir + '/' + 'allpodcastlinks.json', 'w', newline="") as outfile:
     # Arbeitsschritt 1 - wie sammeln erst mal alle podcast links auf der itunes Seite ein
 
     top_level_genres = categories.select('.top-level-genre')[0:2]
-    print(str(top_level_genres))
-    for category in top_level_genres: # Loop through all genres
-        print("get category "+ category['href'])
-        categorypage = requests.get(category['href'], timeout=5)
-        alphabetpages = BeautifulSoup(categorypage.content, "html.parser")
+    print(repr(top_level_genres))
+
+    sub_genres = categories.select('.top-level-subgenres li a')[0:4]
+    print(str(sub_genres))
+
+    all_genres = top_level_genres + sub_genres
+
+    for category in all_genres: # Loop through all genres
         itunesGenre = category.get_text()
         print (itunesGenre)
 
-        # for letter in ascii_uppercase: # Subpages from A-Z + ÄÖÜ + *
-        for letter in ['A', 'B', 'C']:
-            print("get letter "+ letter)
-            letterpageurl = category['href'] + "&letter=" + letter
-            letterpage = requests.get(letterpageurl, timeout=5)
-            pagedletterpage = BeautifulSoup(letterpage.content, 'html.parser')
-            print (itunesGenre + " - " + letter)
+        categorypage = requests.get(category['href'], timeout=5)
 
-            pgcount = 1
-            linkcount = 1
+        allpodcasts = BeautifulSoup(categorypage.content, 'html.parser')
+        allpodcastlinks = allpodcasts.select('#selectedcontent ul>li a')
+        linkcount = len(allpodcastlinks)
 
-            while linkcount>0:
-                print (pgcount)
-                pgurl = letterpageurl + "&page=" + str(pgcount)
-                pgcount += 1
+        for link in allpodcastlinks: # Finally! We loop through all podcast links! Yey!
+            title = link.get_text()
+            print(title)
+            if "/id" in link['href']:
+                theID = get_id(link['href'])
 
-                podcastpage = requests.get(pgurl, timeout=5)
-                allpodcasts = BeautifulSoup(podcastpage.content, 'html.parser')
-                allpodcastlinks = allpodcasts.select('#selectedcontent ul>li a')
-                linkcount = len(allpodcastlinks)
+                # Duplikate ausschließen
+                if not theID in ids:
+                    ids.append(theID)
+                    linkinfo = {
+                        "link": link['href'],
+                        "itunesID": theID
+                    }
+                    podcastlinks.append(linkinfo)
 
-                for link in allpodcastlinks: # Finally! We loop through all podcast links! Yey!
-                    if "/id" in link['href']:
-                        theID = get_id(link['href'])
-
-                        # Duplikate ausschließen
-                        if not theID in ids:
-                            ids.append(theID)
-                            linkinfo = {
-                                "link": link['href'],
-                                "itunesID": theID
-                            }
-                            podcastlinks.append(linkinfo)
-
-                if linkcount == 1: # Bug in itunes: Jede page hat mindestens einen podcast, egal wie hoch die Paginierungszahl. Eine Seite mit nur einem Podcast ist also garantiert die letzte.
-                    linkcount = 0
-
-                if pgcount > 2:
-                    break
+                    all_podcasts[theID] = {
+                        "link": link['href'],
+                        "itunesID": theID,
+                        "title": title,
+                    }
 
             # for page in pagedletterpage.select('.paginate a'): # sub-subpages from 1-x
             #     podcastpage = requests.get(page['href'], timeout=5)
@@ -121,6 +112,7 @@ with open(savedir + '/' + 'allpodcastlinks.json', 'w', newline="") as outfile:
             #                 podcastlinks.append(linkinfo)
 
     print('json dump to outfile\n')
+    json.dump(all_podcasts, outfile, indent=3)
 
 
 
