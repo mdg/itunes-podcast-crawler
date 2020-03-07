@@ -16,7 +16,7 @@ data_de = []
 data_all_2019 = []
 ids = []
 podcastlinks = []
-startlink = 'https://podcasts.apple.com/de/genre/podcasts/id26'
+startlink = 'https://podcasts.apple.com/us/genre/podcasts/id26'
 
 def get_id(url):
     parts = urlparse.urlsplit(url) 
@@ -35,21 +35,21 @@ def savedata(the_data, filename):
 
 
 def saveall():
-    print ("saving data_all...")
-    savedata(data_all, savedir + '\\' + 'data_all.json')
-    print ("done.")
+    # print ("saving data_all...")
+    # savedata(data_all, savedir + '/' + 'data_all.json')
+    # print ("done.")
 
     print ("saving data_en...")
-    savedata(data_en, savedir + '\\' + 'data_en.json')
+    savedata(data_en, savedir + '/' + 'data_en.json')
     print ("done.")
     
-    print ("saving data_de...")
-    savedata(data_de, savedir + '\\' + 'data_de.json')
-    print ("done.")
+    # print ("saving data_de...")
+    # savedata(data_de, savedir + '/' + 'data_de.json')
+    # print ("done.")
     
-    print ("saving data_all_2019...")
-    savedata(data_all_2019, savedir + '\\' + 'data_all_2019.json')
-    print ("done.")
+    # print ("saving data_all_2019...")
+    # savedata(data_all_2019, savedir + '/' + 'data_all_2019.json')
+    # print ("done.")
     
     # flush memory
     data_all.clear()
@@ -66,17 +66,21 @@ categories = BeautifulSoup(allcatpage.content, "html.parser")
 # Verzeichnis für die Ergebnisdaten anlegen
 savedir = "crawl_" + str(datetime.date.today())
 
-if not os.path.exists(savedir):
-    os.mkdir(savedir)
+if True or not os.path.exists(savedir):
+    if not os.path.exists(savedir):
+        os.mkdir(savedir)
 
     # Arbeitsschritt 1 - wie sammeln erst mal alle podcast links auf der itunes Seite ein
     for category in categories.select('.top-level-genre'): # Loop through all genres
+        print("get category "+ category['href'])
         categorypage = requests.get(category['href'], timeout=5)
         alphabetpages = BeautifulSoup(categorypage.content, "html.parser")
         itunesGenre = category.get_text()
         print (itunesGenre)
 
-        for letter in ascii_uppercase + "ÄÖÜ*": # Subpages from A-Z + ÄÖÜ + *
+        # for letter in ascii_uppercase: # Subpages from A-Z + ÄÖÜ + *
+        for letter in ['A', 'B', 'C']:
+            print("get letter "+ letter)
             letterpageurl = category['href'] + "&letter=" + letter
             letterpage = requests.get(letterpageurl, timeout=5)
             pagedletterpage = BeautifulSoup(letterpage.content, 'html.parser')
@@ -111,6 +115,9 @@ if not os.path.exists(savedir):
                 if linkcount == 1: # Bug in itunes: Jede page hat mindestens einen podcast, egal wie hoch die Paginierungszahl. Eine Seite mit nur einem Podcast ist also garantiert die letzte.
                     linkcount = 0
 
+                if pgcount > 5:
+                    break
+
             # for page in pagedletterpage.select('.paginate a'): # sub-subpages from 1-x
             #     podcastpage = requests.get(page['href'], timeout=5)
             #     allpodcasts = BeautifulSoup(podcastpage.content, 'html.parser')
@@ -130,14 +137,16 @@ if not os.path.exists(savedir):
 
 
     # Save links...
-    with open(savedir + '\\' + 'allpodcastlinks.json', 'w', newline="") as outfile:
+    with open(savedir + '/' + 'allpodcastlinks.json', 'w', newline="") as outfile:
+        print('json dump to outfile\n')
         json.dump(podcastlinks, outfile)
 else: # oh, the folder exists from an earlier crawl? Let's use it!
-    with open(savedir + '\\' + 'allpodcastlinks.json', "r") as read_file:
+    with open(savedir + '/' + 'allpodcastlinks.json', "r") as read_file:
         podcastlinks = json.load(read_file)
      
 # Arbeitsschritt 2 - via itunes Lookup API Podcast Details abrufen 
 for link in podcastlinks:
+    print("lookup link: "+ link)
 
     try:
         theID = str(link["itunesID"])
@@ -218,16 +227,16 @@ for link in podcastlinks:
         if language.lower() == 'en':
             data_en.append(metadata)
 
-        if 'de-' in language.lower():
-            data_de.append(metadata)
+        # if 'de-' in language.lower():
+        #     data_de.append(metadata)
 
-        if language.lower() == 'de':
-            data_de.append(metadata)
+        # if language.lower() == 'de':
+        #     data_de.append(metadata)
 
-        if '2019' in releaseDate:
-            data_all_2019.append(metadata)
+        # if '2019' in releaseDate:
+        #     data_all_2019.append(metadata)
 
-        data_all.append(metadata)
+        # data_all.append(metadata)
         print (title)
 
 
