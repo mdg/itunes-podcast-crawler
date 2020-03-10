@@ -112,9 +112,11 @@ with open(savedir + '/' + 'allpodcastlinks.json', 'w', newline="") as outfile:
             #                 podcastlinks.append(linkinfo)
 
     print('json dump to outfile\n')
+    # print(json.dumps(podcastlinks))
     json.dump(all_podcasts, outfile, indent=3)
 
 
+exit(0)
 
 # Arbeitsschritt 2 - via itunes Lookup API Podcast Details abrufen 
 for link in podcastlinks:
