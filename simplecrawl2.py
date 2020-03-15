@@ -125,7 +125,7 @@ for link in podcastlinks:
     try:
         theID = str(link["itunesID"])
 
-        lookupurl = 'https://itunes.apple.com/de/lookup?id=' + theID
+        lookupurl = 'https://itunes.apple.com/us/lookup?id=' + theID
 
         try: 
             luresults = requests.get(lookupurl, timeout=5).json()
