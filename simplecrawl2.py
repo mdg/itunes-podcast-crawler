@@ -75,7 +75,7 @@ with open(savedir + '/' + 'allpodcastlinks.json', 'w', newline="") as outfile:
 
         for link in allpodcastlinks: # Finally! We loop through all podcast links! Yey!
             title = link.get_text()
-            print(title)
+            print("\t"+title)
             if "/id" in link['href']:
                 theID = get_id(link['href'])
 
