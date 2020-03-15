@@ -56,60 +56,72 @@ with open(savedir + '/' + 'allpodcastlinks.json', 'w', newline="") as outfile:
     # Arbeitsschritt 1 - wie sammeln erst mal alle podcast links auf der itunes Seite ein
 
     top_level_genres = categories.select('.top-level-genre')
-    print(repr(top_level_genres))
+    # print(repr(top_level_genres))
 
-    sub_genres = categories.select('.top-level-subgenres li a')
-    print(str(sub_genres))
-
-    all_genres = top_level_genres + sub_genres
-
-    for category in all_genres: # Loop through all genres
+    genres = dict()
+    for category in top_level_genres: # Loop through all genres
         itunesGenre = category.get_text()
-        print (itunesGenre)
+        print(itunesGenre)
 
-        categorypage = requests.get(category['href'], timeout=5)
+        sub_genres = category.parent.select('.top-level-subgenres li a')
+        # print(str(sub_genres))
 
-        allpodcasts = BeautifulSoup(categorypage.content, 'html.parser')
-        allpodcastlinks = allpodcasts.select('#selectedcontent ul>li a')
-        linkcount = len(allpodcastlinks)
+        subs = [category]
+        for subcat in sub_genres:
+            print("\t"+subcat.get_text())
+            subs.append(subcat)
 
-        for link in allpodcastlinks: # Finally! We loop through all podcast links! Yey!
-            title = link.get_text()
-            print("\t"+title)
-            if "/id" in link['href']:
-                theID = get_id(link['href'])
+        genres[itunesGenre] = subs
 
-                # Duplikate ausschließen
-                if not theID in ids:
-                    ids.append(theID)
-                    linkinfo = {
-                        "link": link['href'],
-                        "itunesID": theID
-                    }
-                    podcastlinks.append(linkinfo)
+    print("\nfetch links")
+    for (genre_name, category_genres) in genres.items():
+        print(genre_name)
+        for category in category_genres:
+            subgenre_name = category.get_text()
+            print("\t"+genre_name)
+            categorypage = requests.get(category['href'], timeout=5)
 
-                    all_podcasts[theID] = {
-                        "link": link['href'],
-                        "itunesID": theID,
-                        "title": title,
-                    }
+            allpodcasts = BeautifulSoup(categorypage.content, 'html.parser')
+            allpodcastlinks = allpodcasts.select('#selectedcontent ul>li a')
+            linkcount = len(allpodcastlinks)
 
-            # for page in pagedletterpage.select('.paginate a'): # sub-subpages from 1-x
-            #     podcastpage = requests.get(page['href'], timeout=5)
-            #     allpodcasts = BeautifulSoup(podcastpage.content, 'html.parser')
+            for link in allpodcastlinks: # Finally! We loop through all podcast links! Yey!
+                title = link.get_text()
+                print("\t\t"+title)
+                if "/id" in link['href']:
+                    theID = get_id(link['href'])
 
-            #     for link in allpodcasts.select('#selectedcontent ul>li a'): # Finally! We loop through all podcast links! Yey!
-            #         if "/id" in link['href']:
-            #             theID = get_id(link['href'])
+                    # Duplikate ausschließen
+                    if not theID in ids:
+                        ids.append(theID)
+                        linkinfo = {
+                            "link": link['href'],
+                            "itunesID": theID
+                        }
+                        podcastlinks.append(linkinfo)
 
-            #             # Duplikate ausschließen
-            #             if not theID in ids:
-            #                 ids.append(theID)
-            #                 linkinfo = {
-            #                     "link": link['href'],
-            #                     "itunesID": theID
-            #                 }
-            #                 podcastlinks.append(linkinfo)
+                        all_podcasts[theID] = {
+                            "link": link['href'],
+                            "itunesID": theID,
+                            "title": title,
+                        }
+
+                # for page in pagedletterpage.select('.paginate a'): # sub-subpages from 1-x
+                #     podcastpage = requests.get(page['href'], timeout=5)
+                #     allpodcasts = BeautifulSoup(podcastpage.content, 'html.parser')
+
+                #     for link in allpodcasts.select('#selectedcontent ul>li a'): # Finally! We loop through all podcast links! Yey!
+                #         if "/id" in link['href']:
+                #             theID = get_id(link['href'])
+
+                #             # Duplikate ausschließen
+                #             if not theID in ids:
+                #                 ids.append(theID)
+                #                 linkinfo = {
+                #                     "link": link['href'],
+                #                     "itunesID": theID
+                #                 }
+                #                 podcastlinks.append(linkinfo)
 
     print('json dump to outfile\n')
     # print(json.dumps(podcastlinks))
