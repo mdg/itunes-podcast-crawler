@@ -12,7 +12,6 @@ import datetime
 # Variablen und Konstanten
 data_en = []
 ids = []
-podcastlinks = []
 all_podcasts = {}
 startlink = 'https://podcasts.apple.com/us/genre/podcasts/id26'
 
@@ -41,6 +40,12 @@ def saveall():
     data_en.clear()
 
 
+GENRE_FILTER = [
+    "Sports",
+    "News",
+    "Science",
+    "Health & Fitness",
+]
 
 
 allcatpage = requests.get(startlink, timeout=5)
@@ -61,6 +66,11 @@ with open(savedir + '/' + 'allpodcastlinks.json', 'w', newline="") as outfile:
     genres = dict()
     for category in top_level_genres: # Loop through all genres
         itunesGenre = category.get_text()
+
+        # skip genres not in the filter
+        if itunesGenre not in GENRE_FILTER:
+            continue
+
         print(itunesGenre)
 
         sub_genres = category.parent.select('.top-level-subgenres li a')
@@ -94,35 +104,13 @@ with open(savedir + '/' + 'allpodcastlinks.json', 'w', newline="") as outfile:
                     # Duplikate ausschließen
                     if not theID in ids:
                         ids.append(theID)
-                        linkinfo = {
-                            "link": link['href'],
-                            "itunesID": theID
-                        }
-                        podcastlinks.append(linkinfo)
-
                         all_podcasts[theID] = {
                             "link": link['href'],
                             "itunesID": theID,
                             "title": title,
+                            "genre": genre_name,
+                            "subgenre": subgenre_name,
                         }
 
-                # for page in pagedletterpage.select('.paginate a'): # sub-subpages from 1-x
-                #     podcastpage = requests.get(page['href'], timeout=5)
-                #     allpodcasts = BeautifulSoup(podcastpage.content, 'html.parser')
-
-                #     for link in allpodcasts.select('#selectedcontent ul>li a'): # Finally! We loop through all podcast links! Yey!
-                #         if "/id" in link['href']:
-                #             theID = get_id(link['href'])
-
-                #             # Duplikate ausschließen
-                #             if not theID in ids:
-                #                 ids.append(theID)
-                #                 linkinfo = {
-                #                     "link": link['href'],
-                #                     "itunesID": theID
-                #                 }
-                #                 podcastlinks.append(linkinfo)
-
     print('json dump to outfile\n')
-    # print(json.dumps(podcastlinks))
     json.dump(all_podcasts, outfile, indent=3)
