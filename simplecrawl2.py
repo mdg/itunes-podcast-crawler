@@ -6,12 +6,12 @@ import urllib.parse as urlparse
 import json
 import csv 
 import sys
+import operator
 import os
 import datetime
 
 # Variablen und Konstanten
 data_en = []
-ids = []
 all_podcasts = {}
 startlink = 'https://podcasts.apple.com/us/genre/podcasts/id26'
 
@@ -57,7 +57,7 @@ if not os.path.exists(savedir):
     os.mkdir(savedir)
 
 # Save links...
-with open(savedir + '/' + 'allpodcastlinks.json', 'w', newline="") as outfile:
+with open(savedir + '/' + 'allpodcastlinks.json', 'w') as outfile:
     # Arbeitsschritt 1 - wie sammeln erst mal alle podcast links auf der itunes Seite ein
 
     top_level_genres = categories.select('.top-level-genre')
@@ -88,6 +88,8 @@ with open(savedir + '/' + 'allpodcastlinks.json', 'w', newline="") as outfile:
         print(genre_name)
         for category in category_genres:
             subgenre_name = category.get_text()
+            if genre_name == subgenre_name:
+                subgenre_name = ""
             print("\t"+genre_name)
             categorypage = requests.get(category['href'], timeout=5)
 
@@ -95,22 +97,32 @@ with open(savedir + '/' + 'allpodcastlinks.json', 'w', newline="") as outfile:
             allpodcastlinks = allpodcasts.select('#selectedcontent ul>li a')
             linkcount = len(allpodcastlinks)
 
+            rank = 0
             for link in allpodcastlinks: # Finally! We loop through all podcast links! Yey!
+                rank = rank + 1
                 title = link.get_text()
                 print("\t\t"+title)
                 if "/id" in link['href']:
                     theID = get_id(link['href'])
-
-                    # Duplikate ausschließen
-                    if not theID in ids:
-                        ids.append(theID)
+                    genre = {
+                        "genre": genre_name,
+                        "subgenre": subgenre_name,
+                        "rank": rank,
+                    }
+                    if not theID in all_podcasts:
                         all_podcasts[theID] = {
-                            "link": link['href'],
                             "itunesID": theID,
                             "title": title,
-                            "genre": genre_name,
-                            "subgenre": subgenre_name,
+                            "genres": [genre],
+                            "link": link['href'],
                         }
+                    else:
+                        all_podcasts[theID]["genres"].append(genre)
+
 
     print('json dump to outfile\n')
-    json.dump(all_podcasts, outfile, indent=3)
+    podlist = list(all_podcasts.values())
+    podlist.sort(key=operator.itemgetter("itunesID"))
+    for pod in podlist:
+        json.dump(pod, outfile)
+        outfile.write("\n")
