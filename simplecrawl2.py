@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
+from requests.exceptions import ReadTimeout
 from string import ascii_uppercase
 import re 
 import urllib.parse as urlparse
@@ -95,7 +96,11 @@ with open(savedir + '/' + 'allpodcastlinks.json', 'w') as outfile:
             if genre_name == subgenre_name:
                 subgenre_name = ""
             print("\t"+genre_name)
-            categorypage = requests.get(category['href'], timeout=5)
+            try:
+                categorypage = requests.get(category['href'], timeout=5)
+            except ReadTimeout as e:
+                print("error fetching {}/{} {}: ".format(genre_name, subgenre_name, e))
+                continue
 
             allpodcasts = BeautifulSoup(categorypage.content, 'html.parser')
             allpodcastlinks = allpodcasts.select('#selectedcontent ul>li a')
