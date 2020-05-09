@@ -41,10 +41,10 @@ def saveall():
 
 
 GENRE_FILTER = [
-    "Sports",
+    "Health & Fitness",
     "News",
     "Science",
-    "Health & Fitness",
+    "Sports",
 ]
 
 
